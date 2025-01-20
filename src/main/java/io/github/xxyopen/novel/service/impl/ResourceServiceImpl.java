@@ -52,14 +52,15 @@ public class ResourceServiceImpl implements ResourceService {
     public RestResp<String> uploadImage(MultipartFile file) {
         LocalDateTime now = LocalDateTime.now();
         String savePath =
-            SystemConfigConsts.IMAGE_UPLOAD_DIRECTORY
-                + now.format(DateTimeFormatter.ofPattern("yyyy")) + File.separator
-                + now.format(DateTimeFormatter.ofPattern("MM")) + File.separator
-                + now.format(DateTimeFormatter.ofPattern("dd"));
+                SystemConfigConsts.IMAGE_UPLOAD_DIRECTORY
+                        + now.format(DateTimeFormatter.ofPattern("yyyy")) + File.separator
+                        + now.format(DateTimeFormatter.ofPattern("MM")) + File.separator
+                        + now.format(DateTimeFormatter.ofPattern("dd"));
         String oriName = file.getOriginalFilename();
         assert oriName != null;
         String saveFileName = IdWorker.get32UUID() + oriName.substring(oriName.lastIndexOf("."));
-        File saveFile = new File(fileUploadPath + savePath, saveFileName);
+        File saveFile = new File("D:" + File.separator + fileUploadPath + savePath, saveFileName);
+        System.out.println(saveFile.getParentFile());
         if (!saveFile.getParentFile().exists()) {
             boolean isSuccess = saveFile.getParentFile().mkdirs();
             if (!isSuccess) {
