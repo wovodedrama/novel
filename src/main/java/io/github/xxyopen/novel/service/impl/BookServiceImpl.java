@@ -102,8 +102,7 @@ public class BookServiceImpl implements BookService {
         BookInfoRespDto bookInfo = bookInfoCacheManager.getBookInfo(bookId);
 
         // 查询最新章节信息
-        BookChapterRespDto bookChapter = bookChapterCacheManager.getChapter(
-            bookInfo.getLastChapterId());
+        BookChapterRespDto bookChapter = bookChapterCacheManager.getChapter(bookInfo.getLastChapterId());
 
         // 查询章节内容
         String content = bookContentCacheManager.getBookContent(bookInfo.getLastChapterId());
@@ -111,13 +110,13 @@ public class BookServiceImpl implements BookService {
         // 查询章节总数
         QueryWrapper<BookChapter> chapterQueryWrapper = new QueryWrapper<>();
         chapterQueryWrapper.eq(DatabaseConsts.BookChapterTable.COLUMN_BOOK_ID, bookId);
-        Long chapterTotal = bookChapterMapper.selectCount(chapterQueryWrapper);
+        Long chapterTotal = bookChapterMapper.selectCount(chapterQueryWrapper);// 根据bookId在chapter表中统计记录数
 
         // 组装数据并返回
         return RestResp.ok(BookChapterAboutRespDto.builder()
             .chapterInfo(bookChapter)
             .chapterTotal(chapterTotal)
-            .contentSummary(content.substring(0, 30))
+            .contentSummary(content.substring(0, 30))// 章节内容最多显示30个字
             .build());
     }
 
@@ -125,18 +124,17 @@ public class BookServiceImpl implements BookService {
     public RestResp<List<BookInfoRespDto>> listRecBooks(Long bookId)
         throws NoSuchAlgorithmException {
         Long categoryId = bookInfoCacheManager.getBookInfo(bookId).getCategoryId();
-        List<Long> lastUpdateIdList = bookInfoCacheManager.getLastUpdateIdList(categoryId);
+        List<Long> lastUpdateIdList = bookInfoCacheManager.getLastUpdateIdList(categoryId);// 得到了对应分类下500本最新更新的小说列表
         List<BookInfoRespDto> respDtoList = new ArrayList<>();
-        List<Integer> recIdIndexList = new ArrayList<>();
+        Set<Integer> recIdIndexSet = new HashSet<>();// 用于查重的索引列表
         int count = 0;
-        Random rand = SecureRandom.getInstanceStrong();
+        Random rand = SecureRandom.getInstanceStrong();// 使用 SecureRandom 创建了一个安全的随机数生成器 rand
         while (count < REC_BOOK_COUNT) {
-            int recIdIndex = rand.nextInt(lastUpdateIdList.size());
-            if (!recIdIndexList.contains(recIdIndex)) {
-                recIdIndexList.add(recIdIndex);
+            int recIdIndex = rand.nextInt(lastUpdateIdList.size());// 生成随机索引，范围在[0,小说列表size)中，通过此索引得到lastUpdateIdList中对应的小说
+            if (recIdIndexSet.add(recIdIndex)) {// 如果该索引未被使用过，则加入到索引列表中
                 bookId = lastUpdateIdList.get(recIdIndex);
                 BookInfoRespDto bookInfo = bookInfoCacheManager.getBookInfo(bookId);
-                respDtoList.add(bookInfo);
+                respDtoList.add(bookInfo);// 将Dto加入到推荐列表中
                 count++;
             }
         }
@@ -152,20 +150,20 @@ public class BookServiceImpl implements BookService {
     @Override
     public RestResp<Long> getPreChapterId(Long chapterId) {
         // 查询小说ID 和 章节号
-        BookChapterRespDto chapter = bookChapterCacheManager.getChapter(chapterId);
-        Long bookId = chapter.getBookId();
+        BookChapterRespDto chapter = bookChapterCacheManager.getChapter(chapterId);// 通过当前章节id得到当前章节DTO
+        Long bookId = chapter.getBookId();// 通过当前章节得到BookId
         Integer chapterNum = chapter.getChapterNum();
 
         // 查询上一章信息并返回章节ID
         QueryWrapper<BookChapter> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(DatabaseConsts.BookChapterTable.COLUMN_BOOK_ID, bookId)
-            .lt(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM, chapterNum)
-            .orderByDesc(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM)
+            .lt(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM, chapterNum)// < 当前章节id
+            .orderByDesc(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM)// 倒序排序的第一个就是上一个章节
             .last(DatabaseConsts.SqlEnum.LIMIT_1.getSql());
         return RestResp.ok(
-            Optional.ofNullable(bookChapterMapper.selectOne(queryWrapper))
-                .map(BookChapter::getId)
-                .orElse(null)
+            Optional.ofNullable(bookChapterMapper.selectOne(queryWrapper))// 将结果封装为一个Optional对象
+                .map(BookChapter::getId)// 如果Optional对象存在，只拿章节id
+                .orElse(null)// 如果为空就返回null
         );
     }
 
@@ -194,12 +192,12 @@ public class BookServiceImpl implements BookService {
         QueryWrapper<BookChapter> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(DatabaseConsts.BookChapterTable.COLUMN_BOOK_ID, bookId)
             .orderByAsc(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM);
-        return RestResp.ok(bookChapterMapper.selectList(queryWrapper).stream()
-            .map(v -> BookChapterRespDto.builder()
+        return RestResp.ok(bookChapterMapper.selectList(queryWrapper).stream()// 得到List<BookChapter>转换成stream对象
+            .map(v -> BookChapterRespDto.builder()// 对stream中每个对象都进行DTO的构建
                 .id(v.getId())
                 .chapterName(v.getChapterName())
                 .isVip(v.getIsVip())
-                .build()).toList());
+                .build()).toList());// 最后收集为一个list
     }
 
     @Override
@@ -415,12 +413,13 @@ public class BookServiceImpl implements BookService {
         page.setCurrent(pageReqDto.getPageNum());
         page.setSize(pageReqDto.getPageSize());
         QueryWrapper<BookComment> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(DatabaseConsts.BookCommentTable.COLUMN_USER_ID, userId)
-            .orderByDesc(DatabaseConsts.CommonColumnEnum.UPDATE_TIME.getName());
+        queryWrapper.eq(DatabaseConsts.BookCommentTable.COLUMN_USER_ID, userId)// 去所有书的评论区找user_id发表的评论
+            .orderByDesc(DatabaseConsts.CommonColumnEnum.UPDATE_TIME.getName());// 按照发布时间逆序
         IPage<BookComment> bookCommentPage = bookCommentMapper.selectPage(page, queryWrapper);
         List<BookComment> comments = bookCommentPage.getRecords();
         if (!CollectionUtils.isEmpty(comments)) {
             List<Long> bookIds = comments.stream().map(BookComment::getBookId).toList();
+            // 展示书籍的封面和名称
             QueryWrapper<BookInfo> bookInfoQueryWrapper = new QueryWrapper<>();
             bookInfoQueryWrapper.in(DatabaseConsts.CommonColumnEnum.ID.getName(), bookIds);
             Map<Long, BookInfo> bookInfoMap = bookInfoMapper.selectList(bookInfoQueryWrapper).stream()
