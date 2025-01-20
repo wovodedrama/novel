@@ -3,6 +3,8 @@ package io.github.xxyopen.novel.dao.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 @TableName("user_info")
 public class UserInfo implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
@@ -31,11 +34,6 @@ public class UserInfo implements Serializable {
      * 登录密码-加密
      */
     private String password;
-
-    /**
-     * 加密盐值
-     */
-    private String salt;
 
     /**
      * 昵称
@@ -95,14 +93,6 @@ public class UserInfo implements Serializable {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getSalt() {
-        return salt;
-    }
-
-    public void setSalt(String salt) {
-        this.salt = salt;
     }
 
     public String getNickName() {
@@ -167,7 +157,6 @@ public class UserInfo implements Serializable {
         "id=" + id +
         ", username=" + username +
         ", password=" + password +
-        ", salt=" + salt +
         ", nickName=" + nickName +
         ", userPhoto=" + userPhoto +
         ", userSex=" + userSex +

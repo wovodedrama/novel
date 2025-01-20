@@ -14,18 +14,18 @@ import io.github.xxyopen.novel.dao.entity.UserInfo;
 import io.github.xxyopen.novel.dao.mapper.UserBookshelfMapper;
 import io.github.xxyopen.novel.dao.mapper.UserFeedbackMapper;
 import io.github.xxyopen.novel.dao.mapper.UserInfoMapper;
-import io.github.xxyopen.novel.dto.req.UserInfoUptReqDto;
-import io.github.xxyopen.novel.dto.req.UserLoginReqDto;
-import io.github.xxyopen.novel.dto.req.UserRegisterReqDto;
+import io.github.xxyopen.novel.dto.req.*;
 import io.github.xxyopen.novel.dto.resp.UserInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
 import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
 import io.github.xxyopen.novel.manager.redis.VerifyCodeManager;
 import io.github.xxyopen.novel.service.UserService;
+
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -49,6 +49,8 @@ public class UserServiceImpl implements UserService {
 
     private final JwtUtils jwtUtils;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Override
     public RestResp<UserRegisterRespDto> register(UserRegisterReqDto dto) {
         // 校验图形验证码是否正确
@@ -66,15 +68,19 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(ErrorCodeEnum.USER_NAME_EXIST);
         }
 
+        // 密码校验，长度必须位于6-20之间
+        if(dto.getPassword().length() < 6 || dto.getPassword().length() > 20){
+            throw new BusinessException(ErrorCodeEnum.USER_PASSWORD_LENGTH_INVALID);
+        }
+
         // 注册成功，保存用户信息
+        String encryptedPassword = passwordEncoder.encode(dto.getPassword());
         UserInfo userInfo = new UserInfo();
-        userInfo.setPassword(
-            DigestUtils.md5DigestAsHex(dto.getPassword().getBytes(StandardCharsets.UTF_8)));
+        userInfo.setPassword(encryptedPassword);
         userInfo.setUsername(dto.getUsername());
         userInfo.setNickName(dto.getUsername());
         userInfo.setCreateTime(LocalDateTime.now());
         userInfo.setUpdateTime(LocalDateTime.now());
-        userInfo.setSalt("0");
         userInfoMapper.insert(userInfo);
 
         // 删除验证码
