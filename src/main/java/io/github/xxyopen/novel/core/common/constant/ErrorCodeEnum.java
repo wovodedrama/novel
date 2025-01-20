@@ -55,6 +55,11 @@ public enum ErrorCodeEnum {
     USER_NAME_EXIST("A0111", "用户名已存在"),
 
     /**
+     * 密码长度不合格
+     */
+    USER_PASSWORD_LENGTH_INVALID("A0123","密码长度需要在6-20之间"),
+
+    /**
      * 用户账号不存在
      */
     USER_ACCOUNT_NOT_EXIST("A0201", "用户账号不存在"),
