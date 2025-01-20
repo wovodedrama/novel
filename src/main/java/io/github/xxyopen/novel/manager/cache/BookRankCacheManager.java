@@ -35,7 +35,7 @@ public class BookRankCacheManager {
     }
 
     /**
-     * 查询小说新书榜列表，并放入缓存中
+     * 查询最新上架小说列表，并放入缓存中
      */
     @Cacheable(cacheManager = CacheConsts.CAFFEINE_CACHE_MANAGER,
         value = CacheConsts.BOOK_NEWEST_RANK_CACHE_NAME)
@@ -43,6 +43,7 @@ public class BookRankCacheManager {
         QueryWrapper<BookInfo> bookInfoQueryWrapper = new QueryWrapper<>();
         bookInfoQueryWrapper
             .gt(DatabaseConsts.BookTable.COLUMN_WORD_COUNT, 0)
+            // 按照创建时间逆序
             .orderByDesc(DatabaseConsts.CommonColumnEnum.CREATE_TIME.getName());
         return listRankBooks(bookInfoQueryWrapper);
     }
@@ -55,6 +56,7 @@ public class BookRankCacheManager {
     public List<BookRankRespDto> listUpdateRankBooks() {
         QueryWrapper<BookInfo> bookInfoQueryWrapper = new QueryWrapper<>();
         bookInfoQueryWrapper
+            // 小说字数要大于0才可被纳入更新榜单
             .gt(DatabaseConsts.BookTable.COLUMN_WORD_COUNT, 0)
             .orderByDesc(DatabaseConsts.CommonColumnEnum.UPDATE_TIME.getName());
         return listRankBooks(bookInfoQueryWrapper);
