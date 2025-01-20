@@ -20,14 +20,11 @@ import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
 import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
 import io.github.xxyopen.novel.manager.redis.VerifyCodeManager;
 import io.github.xxyopen.novel.service.UserService;
-
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 
 /**
  * 会员模块 服务实现类
@@ -109,8 +106,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 判断密码是否正确
-        if (!Objects.equals(userInfo.getPassword()
-            , DigestUtils.md5DigestAsHex(dto.getPassword().getBytes(StandardCharsets.UTF_8)))) {
+        if (!passwordEncoder.matches(dto.getPassword(), userInfo.getPassword())) {
             // 密码错误
             throw new BusinessException(ErrorCodeEnum.USER_PASSWORD_ERROR);
         }
