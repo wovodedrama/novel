@@ -15,12 +15,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 前台门户-小说模块 API 控制器
@@ -61,7 +59,8 @@ public class BookController {
      */
     @Operation(summary = "增加小说点击量接口")
     @PostMapping("visit")
-    public RestResp<Void> addVisitCount(@Parameter(description = "小说ID") Long bookId) {
+    public RestResp<Void> addVisitCount(@RequestBody Map<String, Long> params) {
+        Long bookId = params.get("bookId");
         return bookService.addVisitCount(bookId);
     }
 
@@ -76,7 +75,7 @@ public class BookController {
     }
 
     /**
-     * 小说推荐列表查询接口
+     * 小说推荐列表查询接口(进入小说详情页面后，会展示该小说的同类推荐，从同类小说最新更新的前五百本小说中随机挑选四本组成该列表)
      */
     @Operation(summary = "小说推荐列表查询接口")
     @GetMapping("rec_list")
@@ -106,7 +105,7 @@ public class BookController {
     }
 
     /**
-     * 获取上一章节ID接口
+     * 获取上一章节ID接口(章节跳转)
      */
     @Operation(summary = "获取上一章节ID接口")
     @GetMapping("pre_chapter_id/{chapterId}")
@@ -135,9 +134,9 @@ public class BookController {
     }
 
     /**
-     * 小说新书榜查询接口
+     * 最新上架小说查询接口
      */
-    @Operation(summary = "小说新书榜查询接口")
+    @Operation(summary = "最新上架小说查询接口")
     @GetMapping("newest_rank")
     public RestResp<List<BookRankRespDto>> listNewestRankBooks() {
         return bookService.listNewestRankBooks();
