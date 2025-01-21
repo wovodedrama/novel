@@ -6,14 +6,8 @@ import io.github.xxyopen.novel.core.common.resp.PageRespDto;
 import io.github.xxyopen.novel.core.common.resp.RestResp;
 import io.github.xxyopen.novel.core.constant.ApiRouterConsts;
 import io.github.xxyopen.novel.core.constant.SystemConfigConsts;
-import io.github.xxyopen.novel.dto.req.UserCommentReqDto;
-import io.github.xxyopen.novel.dto.req.UserInfoUptReqDto;
-import io.github.xxyopen.novel.dto.req.UserLoginReqDto;
-import io.github.xxyopen.novel.dto.req.UserRegisterReqDto;
-import io.github.xxyopen.novel.dto.resp.UserCommentRespDto;
-import io.github.xxyopen.novel.dto.resp.UserInfoRespDto;
-import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
-import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
+import io.github.xxyopen.novel.dto.req.*;
+import io.github.xxyopen.novel.dto.resp.*;
 import io.github.xxyopen.novel.service.BookService;
 import io.github.xxyopen.novel.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,10 +68,16 @@ public class UserController {
     @Operation(summary = "用户信息修改接口")
     @PutMapping
     public RestResp<Void> updateUserInfo(@Valid @RequestBody UserInfoUptReqDto dto) {
+        // 获取当前线程的用户ID，使用其进行对应的修改
         dto.setUserId(UserHolder.getUserId());
         return userService.updateUserInfo(dto);
     }
 
+    @Operation(summary = "用户重置密码接口")
+    @PutMapping("/reset_pwd")
+    public RestResp<Void> resetUserPassword(@Valid @RequestBody UserPwdResetReqDto dto){
+        return userService.resetUserPwd(dto);
+    }
     /**
      * 用户反馈提交接口
      */

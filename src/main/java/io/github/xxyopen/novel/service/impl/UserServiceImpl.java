@@ -141,6 +141,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public RestResp<Void> resetUserPwd(UserPwdResetReqDto dto) {
+        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(DatabaseConsts.UserInfoTable.COLUMN_USERNAME,dto.getUsername());
+        UserInfo userInfo = userInfoMapper.selectOne(queryWrapper);
+        // 用户不存在
+        if(Objects.isNull(userInfo)){
+            throw new BusinessException(ErrorCodeEnum.USER_ACCOUNT_NOT_EXIST);
+        }
+        String newPassword = passwordEncoder.encode(dto.getNewPassword());
+        userInfo.setPassword(newPassword);
+        userInfoMapper.updateById(userInfo);
+        return RestResp.ok();
+    }
+
+    @Override
     public RestResp<Void> deleteFeedback(Long userId, Long id) {
         QueryWrapper<UserFeedback> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(DatabaseConsts.CommonColumnEnum.ID.getName(), id)
@@ -170,4 +185,5 @@ public class UserServiceImpl implements UserService {
             .userPhoto(userInfo.getUserPhoto())
             .build());
     }
+
 }
