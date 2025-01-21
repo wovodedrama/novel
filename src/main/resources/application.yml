@@ -3,6 +3,9 @@ spring:
   application:
     # 应用名
     name: novel
+  banner:
+    # banner
+    location: banner.txt
   profiles:
     # 激活特定配置
     active: dev
@@ -37,9 +40,9 @@ server:
 --- #---------------------数据库配置---------------------------
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/novel?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/novel?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: root
-    password: test123456
+    password: 123456
   # ShardingSphere-JDBC 配置
   # 配置是 ShardingSphere-JDBC 中唯一与应用开发者交互的模块，
   # 通过它可以快速清晰的理解 ShardingSphere-JDBC 所提供的功能。
@@ -54,7 +57,7 @@ spring:
     redis:
       host: 127.0.0.1
       port: 6379
-      password: test123456
+      password: 123456
 
   # Elasticsearch 配置
   elasticsearch:
@@ -223,7 +226,7 @@ novel:
     # 文件上传配置
     upload:
       # 上传路径
-      path: /Users/xiongxiaoyang/upload
+      path: /1Project/novel/Upload
 
 
 --- #------------------- dev 特定配置---------------------------
