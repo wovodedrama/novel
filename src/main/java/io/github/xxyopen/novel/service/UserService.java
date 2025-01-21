@@ -1,9 +1,7 @@
 package io.github.xxyopen.novel.service;
 
 import io.github.xxyopen.novel.core.common.resp.RestResp;
-import io.github.xxyopen.novel.dto.req.UserInfoUptReqDto;
-import io.github.xxyopen.novel.dto.req.UserLoginReqDto;
-import io.github.xxyopen.novel.dto.req.UserRegisterReqDto;
+import io.github.xxyopen.novel.dto.req.*;
 import io.github.xxyopen.novel.dto.resp.UserInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
 import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
@@ -73,4 +71,12 @@ public interface UserService {
      * @return 用户信息
      */
     RestResp<UserInfoRespDto> getUserInfo(Long userId);
+
+    /**
+     * 用户密码重置
+     * @param dto username and password
+     * @return void
+     */
+    RestResp<Void> resetUserPwd(UserPwdResetReqDto dto);
+
 }
