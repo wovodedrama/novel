@@ -1,9 +1,13 @@
 package io.github.xxyopen.novel.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.xxyopen.novel.core.common.constant.CommonConsts;
 import io.github.xxyopen.novel.core.common.constant.ErrorCodeEnum;
 import io.github.xxyopen.novel.core.common.exception.BusinessException;
+import io.github.xxyopen.novel.core.common.req.PageReqDto;
+import io.github.xxyopen.novel.core.common.resp.PageRespDto;
 import io.github.xxyopen.novel.core.common.resp.RestResp;
 import io.github.xxyopen.novel.core.constant.DatabaseConsts;
 import io.github.xxyopen.novel.core.constant.SystemConfigConsts;
@@ -15,12 +19,15 @@ import io.github.xxyopen.novel.dao.mapper.UserBookshelfMapper;
 import io.github.xxyopen.novel.dao.mapper.UserFeedbackMapper;
 import io.github.xxyopen.novel.dao.mapper.UserInfoMapper;
 import io.github.xxyopen.novel.dto.req.*;
+import io.github.xxyopen.novel.dto.resp.UserFeedbackRespDto;
 import io.github.xxyopen.novel.dto.resp.UserInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
 import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
 import io.github.xxyopen.novel.manager.redis.VerifyCodeManager;
 import io.github.xxyopen.novel.service.UserService;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -153,6 +160,29 @@ public class UserServiceImpl implements UserService {
         userInfo.setPassword(newPassword);
         userInfoMapper.updateById(userInfo);
         return RestResp.ok();
+    }
+
+    @Override
+    public RestResp<PageRespDto<UserFeedbackRespDto>> listFeedbacks(Long userId, PageReqDto pageReqDto) {
+        IPage<UserFeedback> page = new Page<>();
+        page.setCurrent(pageReqDto.getPageNum());
+        page.setSize(pageReqDto.getPageSize());
+        QueryWrapper<UserFeedback> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(DatabaseConsts.UserFeedBackTable.COLUMN_USER_ID,userId)
+            .orderByDesc(DatabaseConsts.CommonColumnEnum.CREATE_TIME.getName());
+        IPage<UserFeedback> userFeedback = userFeedbackMapper.selectPage(page, queryWrapper);
+        List<UserFeedback> feedbacks = userFeedback.getRecords();
+
+        // 处理空的反馈列表
+        if (feedbacks == null || feedbacks.isEmpty()) {
+            return RestResp.ok(PageRespDto.of(pageReqDto.getPageNum(), pageReqDto.getPageSize(), 0, Collections.emptyList()));
+        }
+
+        return RestResp.ok(PageRespDto.of(pageReqDto.getPageNum(), pageReqDto.getPageSize(),page.getTotal(),
+            feedbacks.stream().map(v -> UserFeedbackRespDto.builder()
+                .feedbackContent(v.getContent())
+                .feedbackTime(v.getCreateTime())
+                .build()).toList()));
     }
 
     @Override

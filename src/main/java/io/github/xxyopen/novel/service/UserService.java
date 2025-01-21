@@ -1,7 +1,10 @@
 package io.github.xxyopen.novel.service;
 
+import io.github.xxyopen.novel.core.common.req.PageReqDto;
+import io.github.xxyopen.novel.core.common.resp.PageRespDto;
 import io.github.xxyopen.novel.core.common.resp.RestResp;
 import io.github.xxyopen.novel.dto.req.*;
+import io.github.xxyopen.novel.dto.resp.UserFeedbackRespDto;
 import io.github.xxyopen.novel.dto.resp.UserInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.UserLoginRespDto;
 import io.github.xxyopen.novel.dto.resp.UserRegisterRespDto;
@@ -79,4 +82,11 @@ public interface UserService {
      */
     RestResp<Void> resetUserPwd(UserPwdResetReqDto dto);
 
+    /**
+     * 用户反馈列表查询
+     * @param userId 用户ID
+     * @param pageReqDto 分页查询参数
+     * @return 反馈分页列表数据
+     */
+    RestResp<PageRespDto<UserFeedbackRespDto>> listFeedbacks(Long userId, PageReqDto pageReqDto);
 }

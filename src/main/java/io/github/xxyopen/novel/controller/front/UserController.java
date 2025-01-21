@@ -97,6 +97,15 @@ public class UserController {
     }
 
     /**
+     * 分页查询用户反馈留言
+     */
+    @Operation(summary = "查询用户反馈接口")
+    @GetMapping("feedbacks")
+    public RestResp<PageRespDto<UserFeedbackRespDto>> listFeedbacks(PageReqDto pageReqDto){
+        return userService.listFeedbacks(UserHolder.getUserId(),pageReqDto);
+    }
+
+    /**
      * 发表评论接口
      */
     @Operation(summary = "发表评论接口")
