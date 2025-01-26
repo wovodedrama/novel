@@ -6,10 +6,8 @@ import io.github.xxyopen.novel.core.common.resp.PageRespDto;
 import io.github.xxyopen.novel.core.common.resp.RestResp;
 import io.github.xxyopen.novel.core.constant.ApiRouterConsts;
 import io.github.xxyopen.novel.core.constant.SystemConfigConsts;
-import io.github.xxyopen.novel.dto.req.AuthorRegisterReqDto;
-import io.github.xxyopen.novel.dto.req.BookAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterUpdateReqDto;
+import io.github.xxyopen.novel.dto.req.*;
+import io.github.xxyopen.novel.dto.resp.BookBasicInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.BookChapterRespDto;
 import io.github.xxyopen.novel.dto.resp.BookInfoRespDto;
 import io.github.xxyopen.novel.dto.resp.ChapterContentRespDto;
@@ -76,6 +74,24 @@ public class AuthorController {
     @GetMapping("books")
     public RestResp<PageRespDto<BookInfoRespDto>> listBooks(@ParameterObject PageReqDto dto) {
         return bookService.listAuthorBooks(dto);
+    }
+
+    @Operation(summary = "小说基本信息查询接口")
+    @GetMapping("book/{bookId}")
+    public RestResp<BookBasicInfoRespDto> getBookBasicInfo(
+        @Parameter(description = "小说ID") @PathVariable("bookId") Long bookId){
+        return bookService.getBookBasicInfo(bookId);
+    }
+
+    /**
+     * 小说书籍基本信息修改接口
+     */
+    @Operation(summary = "小说基本信息修改接口")
+    @PostMapping("book/{bookId}")
+    public RestResp<Void> updateBookInfo(
+        @Parameter(description = "小说ID") @PathVariable("bookId") Long bookId,
+        @Valid @RequestBody BookUpdateReqDto dto){
+        return bookService.updateBookInfo(bookId,dto);
     }
 
     /**

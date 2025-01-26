@@ -17,10 +17,7 @@ import io.github.xxyopen.novel.dao.mapper.BookCommentMapper;
 import io.github.xxyopen.novel.dao.mapper.BookContentMapper;
 import io.github.xxyopen.novel.dao.mapper.BookInfoMapper;
 import io.github.xxyopen.novel.dto.AuthorInfoDto;
-import io.github.xxyopen.novel.dto.req.BookAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterUpdateReqDto;
-import io.github.xxyopen.novel.dto.req.UserCommentReqDto;
+import io.github.xxyopen.novel.dto.req.*;
 import io.github.xxyopen.novel.dto.resp.*;
 import io.github.xxyopen.novel.manager.cache.*;
 import io.github.xxyopen.novel.manager.dao.UserDaoManager;
@@ -93,6 +90,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public RestResp<BookInfoRespDto> getBookById(Long bookId) {
+        bookInfoCacheManager.evictBookInfoCache(bookId);
         return RestResp.ok(bookInfoCacheManager.getBookInfo(bookId));
     }
 
@@ -110,13 +108,13 @@ public class BookServiceImpl implements BookService {
         // 查询章节总数
         QueryWrapper<BookChapter> chapterQueryWrapper = new QueryWrapper<>();
         chapterQueryWrapper.eq(DatabaseConsts.BookChapterTable.COLUMN_BOOK_ID, bookId);
-        Long chapterTotal = bookChapterMapper.selectCount(chapterQueryWrapper);// 根据bookId在chapter表中统计记录数
+        Long chapterTotal = bookChapterMapper.selectCount(chapterQueryWrapper);
 
         // 组装数据并返回
         return RestResp.ok(BookChapterAboutRespDto.builder()
             .chapterInfo(bookChapter)
             .chapterTotal(chapterTotal)
-            .contentSummary(content.substring(0, 30))// 章节内容最多显示30个字
+            .contentSummary(content.substring(0, 30))
             .build());
     }
 
@@ -124,17 +122,21 @@ public class BookServiceImpl implements BookService {
     public RestResp<List<BookInfoRespDto>> listRecBooks(Long bookId)
         throws NoSuchAlgorithmException {
         Long categoryId = bookInfoCacheManager.getBookInfo(bookId).getCategoryId();
-        List<Long> lastUpdateIdList = bookInfoCacheManager.getLastUpdateIdList(categoryId);// 得到了对应分类下500本最新更新的小说列表
+        List<Long> lastUpdateIdList = bookInfoCacheManager.getLastUpdateIdList(categoryId);
         List<BookInfoRespDto> respDtoList = new ArrayList<>();
-        Set<Integer> recIdIndexSet = new HashSet<>();// 用于查重的索引列表
+        // 用于查重的索引列表
+        Set<Integer> recIdIndexSet = new HashSet<>();
         int count = 0;
-        Random rand = SecureRandom.getInstanceStrong();// 使用 SecureRandom 创建了一个安全的随机数生成器 rand
+        // 使用 SecureRandom 创建了一个安全的随机数生成器 rand
+        Random rand = SecureRandom.getInstanceStrong();
         while (count < REC_BOOK_COUNT) {
-            int recIdIndex = rand.nextInt(lastUpdateIdList.size());// 生成随机索引，范围在[0,小说列表size)中，通过此索引得到lastUpdateIdList中对应的小说
-            if (recIdIndexSet.add(recIdIndex)) {// 如果该索引未被使用过，则加入到索引列表中
+            // 生成随机索引，范围在[0,小说列表size)中，通过此索引得到lastUpdateIdList中对应的小说
+            int recIdIndex = rand.nextInt(lastUpdateIdList.size());
+            // 如果该索引未被使用过，则加入到索引列表中
+            if (recIdIndexSet.add(recIdIndex)) {
                 bookId = lastUpdateIdList.get(recIdIndex);
                 BookInfoRespDto bookInfo = bookInfoCacheManager.getBookInfo(bookId);
-                respDtoList.add(bookInfo);// 将Dto加入到推荐列表中
+                respDtoList.add(bookInfo);
                 count++;
             }
         }
@@ -150,20 +152,23 @@ public class BookServiceImpl implements BookService {
     @Override
     public RestResp<Long> getPreChapterId(Long chapterId) {
         // 查询小说ID 和 章节号
-        BookChapterRespDto chapter = bookChapterCacheManager.getChapter(chapterId);// 通过当前章节id得到当前章节DTO
-        Long bookId = chapter.getBookId();// 通过当前章节得到BookId
+        BookChapterRespDto chapter = bookChapterCacheManager.getChapter(chapterId);
+        Long bookId = chapter.getBookId();
         Integer chapterNum = chapter.getChapterNum();
 
         // 查询上一章信息并返回章节ID
         QueryWrapper<BookChapter> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(DatabaseConsts.BookChapterTable.COLUMN_BOOK_ID, bookId)
-            .lt(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM, chapterNum)// < 当前章节id
-            .orderByDesc(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM)// 倒序排序的第一个就是上一个章节
+            .lt(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM, chapterNum)
+            .orderByDesc(DatabaseConsts.BookChapterTable.COLUMN_CHAPTER_NUM)
             .last(DatabaseConsts.SqlEnum.LIMIT_1.getSql());
         return RestResp.ok(
-            Optional.ofNullable(bookChapterMapper.selectOne(queryWrapper))// 将结果封装为一个Optional对象
-                .map(BookChapter::getId)// 如果Optional对象存在，只拿章节id
-                .orElse(null)// 如果为空就返回null
+            // 将结果封装为一个Optional对象
+            Optional.ofNullable(bookChapterMapper.selectOne(queryWrapper))
+                // 如果Optional对象存在，只拿章节id
+                .map(BookChapter::getId)
+                // 如果为空就返回null
+                .orElse(null)
         );
     }
 
@@ -310,6 +315,35 @@ public class BookServiceImpl implements BookService {
         bookInfo.setUpdateTime(LocalDateTime.now());
         // 保存小说信息
         bookInfoMapper.insert(bookInfo);
+        return RestResp.ok();
+    }
+
+    @Override
+    public RestResp<BookBasicInfoRespDto> getBookBasicInfo(Long bookId) {
+        BookInfo bookInfo = bookInfoMapper.selectById(bookId);
+        return RestResp.ok(BookBasicInfoRespDto.builder()
+            .categoryName(bookInfo.getCategoryName())
+            .picUrl(bookInfo.getPicUrl())
+            .bookName(bookInfo.getBookName())
+            .bookDesc(bookInfo.getBookDesc())
+            .authorName(bookInfo.getAuthorName())
+            .wordCount(bookInfo.getWordCount())
+            .visitCount(bookInfo.getVisitCount())
+            .build());
+    }
+
+    @Override
+    public RestResp<Void> updateBookInfo(Long bookId, BookUpdateReqDto dto) {
+        // 得到小说信息
+        BookInfo bookInfo = bookInfoMapper.selectById(bookId);
+        // 更新信息
+        bookInfo.setPicUrl(dto.getPicUrl());
+        bookInfo.setBookDesc(dto.getBookDesc());
+        bookInfo.setUpdateTime(LocalDateTime.now());
+        // 保存小说信息
+        bookInfoMapper.updateById(bookInfo);
+        // 清空缓存
+        bookInfoCacheManager.evictBookInfoCache(bookId);
         return RestResp.ok();
     }
 

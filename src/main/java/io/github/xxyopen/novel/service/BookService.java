@@ -3,10 +3,7 @@ package io.github.xxyopen.novel.service;
 import io.github.xxyopen.novel.core.common.req.PageReqDto;
 import io.github.xxyopen.novel.core.common.resp.PageRespDto;
 import io.github.xxyopen.novel.core.common.resp.RestResp;
-import io.github.xxyopen.novel.dto.req.BookAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterAddReqDto;
-import io.github.xxyopen.novel.dto.req.ChapterUpdateReqDto;
-import io.github.xxyopen.novel.dto.req.UserCommentReqDto;
+import io.github.xxyopen.novel.dto.req.*;
 import io.github.xxyopen.novel.dto.resp.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -155,6 +152,22 @@ public interface BookService {
      * @return void
      */
     RestResp<Void> saveBook(BookAddReqDto dto);
+
+    /**
+     * 查看小说基本信息
+     *
+     * @param bookId 小说ID
+     * @return 小说基本信息
+     */
+    RestResp<BookBasicInfoRespDto> getBookBasicInfo(Long bookId);
+
+    /**
+     * 小说基本信息更新
+     * @param bookId 小说ID
+     * @param dto 更新内容
+     * @return void
+     */
+    RestResp<Void> updateBookInfo(Long bookId, BookUpdateReqDto dto);
 
     /**
      * 小说章节信息保存
